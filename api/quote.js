@@ -80,87 +80,38 @@ export default function handler(req, res) {
     const index = parseInt(seed) % quotes.length;
     const quote = quotes[index];
 
-    const width = 900;
-    const padding = 50;
-    const maxLineWidth = 70;
+    const width = 800;
+    const padding = 40;
+    const maxLineWidth = 65;
     
     const textLines = wrapText(quote.text, maxLineWidth);
-    const lineHeight = 32;
-    const authorOffset = 30;
+    const lineHeight = 28;
+    const authorOffset = 20;
     
-    const height = padding * 2 + (textLines.length * lineHeight) + authorOffset + 40;
+    const height = padding * 2 + (textLines.length * lineHeight) + authorOffset + 30;
 
     const svg = `
     <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
         <defs>
             <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" style="stop-color:#2d3e50;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#3a5568;stop-opacity:1" />
-            </linearGradient>
-            
-            <filter id="glow">
-                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-            </filter>
-            
-            <linearGradient id="quote-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" style="stop-color:#64b5f6;stop-opacity:1" />
-                <stop offset="50%" style="stop-color:#7986cb;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#9575cd;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#3a4f63;stop-opacity:1" />
             </linearGradient>
         </defs>
         
-        <!-- Background -->
-        <rect width="${width}" height="${height}" fill="url(#bg-gradient)" rx="15"/>
+        <rect width="${width}" height="${height}" fill="url(#bg-gradient)" rx="10"/>
         
-        <!-- Decorative corner elements -->
-        <circle cx="30" cy="30" r="4" fill="#64b5f6" opacity="0.3"/>
-        <circle cx="${width - 30}" cy="${height - 30}" r="4" fill="#9575cd" opacity="0.3"/>
-        
-        <!-- Subtle border -->
-        <rect x="2" y="2" width="${width - 4}" height="${height - 4}" 
-              fill="none" stroke="url(#quote-gradient)" stroke-width="2" 
-              rx="15" opacity="0.2"/>
-        
-        <!-- Quote icon -->
-        <text x="${padding}" y="${padding + 5}" font-family="Georgia, serif" font-size="48" 
-              fill="url(#quote-gradient)" opacity="0.3" font-weight="bold">"</text>
-        
-        <!-- Main text -->
-        <g transform="translate(${padding + 10}, ${padding + 35})">
+        <g transform="translate(${padding}, ${padding + 25})">
             ${textLines.map((line, i) => `
-                <text x="0" y="${i * lineHeight}" 
-                      font-family="'Segoe UI', 'SF Pro Display', -apple-system, system-ui, sans-serif" 
-                      font-size="20" 
-                      fill="#e8eaf6" 
-                      letter-spacing="0.3"
-                      font-weight="400">
+                <text x="0" y="${i * lineHeight}" font-family="'Segoe UI', Arial, sans-serif" font-size="18" fill="#ffffff" opacity="0.95">
                     ${escapeXml(line)}
                 </text>
             `).join('')}
             
-            <!-- Author -->
-            <g transform="translate(0, ${textLines.length * lineHeight + authorOffset})">
-                <line x1="0" y1="-10" x2="40" y2="-10" 
-                      stroke="url(#quote-gradient)" stroke-width="2" opacity="0.5"/>
-                <text x="0" y="5" 
-                      font-family="'Segoe UI', 'SF Pro Display', -apple-system, system-ui, sans-serif" 
-                      font-size="16" 
-                      fill="#b0bec5" 
-                      font-style="italic"
-                      letter-spacing="0.5">
-                    ${escapeXml(quote.author)}
-                </text>
-            </g>
+            <text x="0" y="${textLines.length * lineHeight + authorOffset}" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#ffffff" opacity="0.7" font-style="italic">
+                — ${escapeXml(quote.author)}
+            </text>
         </g>
-        
-        <!-- Closing quote -->
-        <text x="${width - padding - 20}" y="${height - padding + 10}" 
-              font-family="Georgia, serif" font-size="48" 
-              fill="url(#quote-gradient)" opacity="0.3" font-weight="bold">"</text>
     </svg>
     `;
 
