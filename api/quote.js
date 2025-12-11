@@ -1,6 +1,7 @@
 // api/quote.js - Vercel Serverless Function
 
 const quotes = [
+    { text: "Wave goodbye to the past when hope and faith have grown so strong and sound. Unfold this pair of wings for me again, to soar above this world.", author: "Moon Halo「HOYO-MiX ft. 茶理理, TetraCalyx & Hanser」" },
     { text: "This world is conveniently imperfect, so I really want to know.", author: "Sakanaction「Kaiju」" },
     { text: "You continue to run with the fragrance of the rice and the flowing river. Slightly smile, dream of childhood, I know. Don't cry, let the fireflies lead you to escape. Forever relying on village folk song. Go home, back to the beginning of happiness.", author: "Jay Chou「Fragrant of Rice」" },
     { text: "The small yellow flower from the story has been drifting in the wind since the year of its birth. The swing from childhood, swinging with the memories until now... I'm staring at the sky, whistling the intro of the songs. I think of petals trying to fall. The missing rainy day, I want it to experience it again.", author: "Jay Chou「Sunny Day」" },
