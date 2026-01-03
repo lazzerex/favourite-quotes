@@ -1,7 +1,9 @@
 // api/quote.js - Vercel Serverless Function
 
 const quotes = [
-    { text: "Wave goodbye to the past when hope and faith have grown so strong and sound. Unfold this pair of wings for me again, to soar above this world.", author: "Moon Halo「HOYO-MiX ft. 茶理理, TetraCalyx & Hanser」" },
+    { text: "Cold wintry wind doesn't cry,it just gently rustles the trees. Although it actually wants to cry aloud. People pass by with their coat collars turned up. Without saying anything, they each hurry home.", author: "Sakurazaka46「Kogarashi wa Nakanai」" },
+    { text: "The brightest star in the night sky, I don't even know its name. Billions of light years away, we're only watching eternity. Among countless lights out there, what we can see from here must be nothing but coincidence. And yet, it's precious.", author: "Sakurazaka46「Yozora de Ichiban Kagayaiteru Hoshi no Namae wo Boku wa Shiranai」" },
+    { text: "Wave goodbye to the past when hope and faith have grown so strong and sound. Unfold this pair of wings for me again, to soar above this world.", author: "HOYO-MiX ft. 茶理理, TetraCalyx & Hanser「Moon Halo」" },
     { text: "This world is conveniently imperfect, so I really want to know.", author: "Sakanaction「Kaiju」" },
     { text: "You continue to run with the fragrance of the rice and the flowing river. Slightly smile, dream of childhood, I know. Don't cry, let the fireflies lead you to escape. Forever relying on village folk song. Go home, back to the beginning of happiness.", author: "Jay Chou「Fragrant of Rice」" },
     { text: "The small yellow flower from the story has been drifting in the wind since the year of its birth. The swing from childhood, swinging with the memories until now... I'm staring at the sky, whistling the intro of the songs. I think of petals trying to fall. The missing rainy day, I want it to experience it again.", author: "Jay Chou「Sunny Day」" },
@@ -82,39 +84,45 @@ export default function handler(req, res) {
     const quote = quotes[index];
 
     const width = 800;
-    const padding = 40;
-    const maxLineWidth = 65;
+    const padding = 48;
+    const maxLineWidth = 56;
     
     const textLines = wrapText(quote.text, maxLineWidth);
-    const lineHeight = 28;
-    const authorOffset = 20;
+    const lineHeight = 34;
+    const authorOffset = 26;
     
-    const height = padding * 2 + (textLines.length * lineHeight) + authorOffset + 30;
+    const height = padding * 2 + (textLines.length * lineHeight) + authorOffset + 20;
 
     const svg = `
-    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Quote card">
         <defs>
             <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#2d3e50;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#3a4f63;stop-opacity:1" />
+                <stop offset="0%" stop-color="#26313a" />
+                <stop offset="100%" stop-color="#30414a" />
             </linearGradient>
+
+            <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="8" stdDeviation="18" flood-color="#0b0f12" flood-opacity="0.45" />
+            </filter>
         </defs>
-        
-        <rect width="${width}" height="${height}" fill="url(#bg-gradient)" rx="10"/>
-        
-        <g transform="translate(${padding}, ${padding + 25})">
+
+        <rect width="${width}" height="${height}" rx="14" fill="url(#bg-gradient)" filter="url(#soft-shadow)" stroke-opacity="0.04" stroke="#ffffff" />
+
+        <!-- Large faint opening quote mark for a modern minimalist touch -->
+        <text x="${padding}" y="${padding + 18}" font-family: 'serif' font-size="120" fill="#ffffff" fill-opacity="0.06" font-weight="700">“</text>
+
+        <g transform="translate(${padding + 28}, ${padding + 56})">
             ${textLines.map((line, i) => `
-                <text x="0" y="${i * lineHeight}" font-family="'Segoe UI', Arial, sans-serif" font-size="18" fill="#ffffff" opacity="0.95">
+                <text x="0" y="${i * lineHeight}" font-family="Inter, Segoe UI, Roboto, -apple-system, system-ui, Arial, sans-serif" font-size="20" fill="#ffffff" fill-opacity="0.96" font-weight="500">
                     ${escapeXml(line)}
                 </text>
             `).join('')}
-            
-            <text x="0" y="${textLines.length * lineHeight + authorOffset}" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#ffffff" opacity="0.7" font-style="italic">
+
+            <text x="0" y="${textLines.length * lineHeight + authorOffset}" font-family="Inter, Segoe UI, Roboto, -apple-system, system-ui, Arial, sans-serif" font-size="14" fill="#ffffff" fill-opacity="0.7" font-style="italic">
                 — ${escapeXml(quote.author)}
             </text>
         </g>
-    </svg>
-    `;
+    </svg>`;
 
     res.setHeader('Content-Type', 'image/svg+xml');
     res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
