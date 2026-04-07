@@ -1,6 +1,8 @@
 // api/quote.js - Vercel Serverless Function
 
 const quotes = [
+    { text: "I hope this dream is the sequel to the book I read that day.", author: "Yorushika「Aporia」" },
+	{ text: "Is the rustling forest a memory of the wind? What secrets lay hidden in the heart of the sundered fruit? What truths await the wanderer upon distant paths, and will the silent stars ever conspire to fulfill that dream?", author: "Yui Makino「Touch of Hope」" },
     { text: "Cold wintry wind doesn't cry,it just gently rustles the trees. Although it actually wants to cry aloud. People pass by with their coat collars turned up. Without saying anything, they each hurry home.", author: "Sakurazaka46「Kogarashi wa Nakanai」" },
     { text: "The brightest star in the night sky, I don't even know its name. Billions of light years away, we're only watching eternity. Among countless lights out there, what we can see from here must be nothing but coincidence. And yet, it's precious.", author: "Sakurazaka46「Yozora de Ichiban Kagayaiteru Hoshi no Namae wo Boku wa Shiranai」" },
     { text: "Wave goodbye to the past when hope and faith have grown so strong and sound. Unfold this pair of wings for me again, to soar above this world.", author: "HOYO-MiX ft. 茶理理, TetraCalyx & Hanser「Moon Halo」" },
@@ -77,11 +79,77 @@ function escapeXml(text) {
         .replace(/'/g, '&apos;');
 }
 
+const SEEN_QUOTES_COOKIE = 'seen_quotes';
+
+function parseCookies(header = '') {
+    return header
+        .split(';')
+        .map(part => part.trim())
+        .filter(Boolean)
+        .reduce((cookies, entry) => {
+            const separatorIndex = entry.indexOf('=');
+            if (separatorIndex === -1) return cookies;
+
+            const key = entry.slice(0, separatorIndex);
+            const value = entry.slice(separatorIndex + 1);
+            cookies[key] = decodeURIComponent(value);
+            return cookies;
+        }, {});
+}
+
+function parseSeenQuotes(raw, totalQuotes) {
+    if (!raw) return new Set();
+
+    const seen = new Set();
+    raw
+        .split('.')
+        .map(value => Number.parseInt(value, 10))
+        .forEach(index => {
+            if (Number.isInteger(index) && index >= 0 && index < totalQuotes) {
+                seen.add(index);
+            }
+        });
+
+    return seen;
+}
+
+function getSeedValue(seedParam) {
+    const rawSeed = Array.isArray(seedParam) ? seedParam[0] : seedParam;
+    const parsed = Number.parseInt(rawSeed, 10);
+    return Number.isInteger(parsed) ? parsed : Date.now();
+}
+
+function serializeSeenQuotes(seenQuotes) {
+    return [...seenQuotes].join('.');
+}
+
 export default function handler(req, res) {
-    // Use seed from timestamp or custom seed for consistent random on refresh
-    const seed = req.query.seed || Date.now();
-    const index = parseInt(seed) % quotes.length;
-    const quote = quotes[index];
+    // Keep a per-browser cycle: show every quote once before repeating.
+    const cookies = parseCookies(req.headers.cookie || '');
+    const seenQuotes = parseSeenQuotes(cookies[SEEN_QUOTES_COOKIE], quotes.length);
+
+    let availableIndices = [];
+    for (let i = 0; i < quotes.length; i += 1) {
+        if (!seenQuotes.has(i)) {
+            availableIndices.push(i);
+        }
+    }
+
+    if (availableIndices.length === 0) {
+        seenQuotes.clear();
+        availableIndices = quotes.map((_, index) => index);
+    }
+
+    const seed = getSeedValue(req.query.seed);
+    const availableIndex = Math.abs(seed) % availableIndices.length;
+    const quoteIndex = availableIndices[availableIndex];
+    const quote = quotes[quoteIndex];
+
+    seenQuotes.add(quoteIndex);
+    res.setHeader(
+        'Set-Cookie',
+        `${SEEN_QUOTES_COOKIE}=${encodeURIComponent(serializeSeenQuotes(seenQuotes))}; Path=/; Max-Age=2592000; SameSite=Lax`
+    );
 
     const width = 800;
     const padding = 48;
