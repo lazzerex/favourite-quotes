@@ -1,6 +1,7 @@
 // api/quote.js - Vercel Serverless Function
 
 const quotes = [
+	{ text: "If a star is a star, then I can only be myself.", author: "NICO Touches The Walls「Diver」" },
 	{ text: "Even when the rain pours down, it’s sunny above the clouds.", author: "Yorushika「Haru」" },
 	{ text: "Run together towards the future. Be just the way you are.", author: "Access「Arc jump’n to the sky」" },
 	{ text: "Maybe it's a gift that I couldn't recognize. Maybe I don't really need to feel satisfied. Maybe it's a gift that I spend all this time. Just trying to feel alive.", author: "Porter Robinson「Trying to Feel Alive」" },
