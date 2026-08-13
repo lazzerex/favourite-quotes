@@ -1,6 +1,7 @@
 // api/quote.js - Vercel Serverless Function
 
 const quotes = [
+ { text: "That summer I put my everything into too, will never fade away and I can never forget. To live out life today, even without knowing where to look.", author: "Mrs. GREEN APPLE「Lilac」" },
 	{ text: "You got to change, breakin’ the chain. Toward tomorrow you must fly away. Don’t be afraid, the world is your stage.", author: "Tourbillon「Break the Chain」" },
 	{ text: "If a star is a star, then I can only be myself.", author: "NICO Touches The Walls「Diver」" },
 	{ text: "Even when the rain pours down, it’s sunny above the clouds.", author: "Yorushika「Haru」" },
