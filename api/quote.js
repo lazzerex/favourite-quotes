@@ -1,7 +1,8 @@
 // api/quote.js - Vercel Serverless Function
 
 const quotes = [
- { text: "No matter how hard we gaze into the scenery taken from beyond the lens, the truth is the thing that is projected into the eye of our hearts.", author: "Gackt「Journey Through the Decade」" },
+	{ text: "A voice cries out amid my dilemma, breaking down all impossibilities.", author: "RIDER CHIPS「ELEMENTS」" },
+    { text: "No matter how hard we gaze into the scenery taken from beyond the lens, the truth is the thing that is projected into the eye of our hearts.", author: "Gackt「Journey Through the Decade」" },
 	{ text: "Moving fast, let your heart run beyond tomorrow.", author: "YU-KI「NEXT LEVEL」" },
     { text: "That summer I put my everything into too, will never fade away and I can never forget. To live out life today, even without knowing where to look.", author: "Mrs. GREEN APPLE「Lilac」" },
 	{ text: "You got to change, breakin’ the chain. Toward tomorrow you must fly away. Don’t be afraid, the world is your stage.", author: "Tourbillon「Break the Chain」" },
