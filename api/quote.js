@@ -1,6 +1,7 @@
 // api/quote.js - Vercel Serverless Function
 
 const quotes = [
+	{ text: "Look within yourself, to find the truth.", author: "BACK-ON「CHEMYxSTORY」" },
 	{ text: "A voice cries out amid my dilemma, breaking down all impossibilities.", author: "RIDER CHIPS「ELEMENTS」" },
     { text: "No matter how hard we gaze into the scenery taken from beyond the lens, the truth is the thing that is projected into the eye of our hearts.", author: "Gackt「Journey Through the Decade」" },
 	{ text: "Moving fast, let your heart run beyond tomorrow.", author: "YU-KI「NEXT LEVEL」" },
