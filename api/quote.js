@@ -4,8 +4,9 @@
 
 const quotes = [
 
- { text: "Now in the hearts of everyone, call and wake up, the way you go. Search for the truth, to believe and doubt again.", author: "ISSA「Justiφ's」" },
- { text: "When you're lost, you're sure to be guided by the strength of your feelings. The future you wish for is already in your hands.", author: "AAA「Climax Jump」" },
+	{ text: "Like the light overflowing from the distant horizons beyond. Your future has only just begun.", author: "Akira Fuse「Hajimari no Kimi e」" },
+    { text: "Now in the hearts of everyone, call and wake up, the way you go. Search for the truth, to believe and doubt again.", author: "ISSA「Justiφ's」" },
+    { text: "When you're lost, you're sure to be guided by the strength of your feelings. The future you wish for is already in your hands.", author: "AAA「Climax Jump」" },
 	{ text: "Look within yourself, to find the truth.", author: "BACK-ON「CHEMYxSTORY」" },
 	{ text: "A voice cries out amid my dilemma, breaking down all impossibilities.", author: "RIDER CHIPS「ELEMENTS」" },
     { text: "No matter how hard we gaze into the scenery taken from beyond the lens, the truth is the thing that is projected into the eye of our hearts.", author: "Gackt「Journey Through the Decade」" },
