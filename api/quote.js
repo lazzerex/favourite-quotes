@@ -1,9 +1,10 @@
 // api/quote.js - Vercel Serverless Function
 
 
-
 const quotes = [
 
+ 
+ { text: "Live your life by no one's way but your own.", author: "Akira Fuse「Shonen Yo」" },
 	{ text: "Like the light overflowing from the distant horizons beyond. Your future has only just begun.", author: "Akira Fuse「Hajimari no Kimi e」" },
     { text: "Now in the hearts of everyone, call and wake up, the way you go. Search for the truth, to believe and doubt again.", author: "ISSA「Justiφ's」" },
     { text: "When you're lost, you're sure to be guided by the strength of your feelings. The future you wish for is already in your hands.", author: "AAA「Climax Jump」" },
