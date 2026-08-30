@@ -1,9 +1,12 @@
 // api/quote.js - Vercel Serverless Function
 
 
+
 const quotes = [
 
- 
+
+
+ { text: "If you lay down your heavy burdens and make a pillow out of them, then take a deep breath, and you become the blue sky.", author: "Jin Hashimoto「Aozora ni Naru」" },
  { text: "Live your life by no one's way but your own.", author: "Akira Fuse「Shonen Yo」" },
 	{ text: "Like the light overflowing from the distant horizons beyond. Your future has only just begun.", author: "Akira Fuse「Hajimari no Kimi e」" },
     { text: "Now in the hearts of everyone, call and wake up, the way you go. Search for the truth, to believe and doubt again.", author: "ISSA「Justiφ's」" },
