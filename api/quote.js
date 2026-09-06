@@ -1,10 +1,11 @@
 // api/quote.js - Vercel Serverless Function
 
+No matter how far, or how long I can hear my lonely heartbeat echoing That's why whenever I feel warmth I come to cherish it dearly
 
 
 const quotes = [
-
-
+ 
+ { text: "No matter how far, or how long, I can hear my lonely heartbeat echoing. That's why whenever I feel warmth, I come to cherish it dearly.", author: "AiNA THE END「Luminous」" },
 
  { text: "If you lay down your heavy burdens and make a pillow out of them, then take a deep breath, and you become the blue sky.", author: "Jin Hashimoto「Aozora ni Naru」" },
  { text: "Live your life by no one's way but your own.", author: "Akira Fuse「Shonen Yo」" },
