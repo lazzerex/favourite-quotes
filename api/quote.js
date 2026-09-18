@@ -84,15 +84,21 @@ function wrapText(text, maxWidth) {
 
     words.forEach(word => {
         const testLine = currentLine + (currentLine ? ' ' : '') + word;
+
         if (testLine.length <= maxWidth) {
             currentLine = testLine;
         } else {
-            if (currentLine) lines.push(currentLine);
+            if (currentLine) {
+                lines.push(currentLine);
+            }
             currentLine = word;
         }
     });
-    if (currentLine) lines.push(currentLine);
-    
+
+    if (currentLine) {
+        lines.push(currentLine);
+    }
+
     return lines;
 }
 
@@ -105,7 +111,8 @@ function escapeXml(text) {
         .replace(/'/g, '&apos;');
 }
 
-const SEEN_QUOTES_COOKIE = 'seen_quotes';
+const SEEN_QUOTES_COOKIE = 'seen_quotes_v2';
+const SHUFFLE_COOKIE = 'quote_order_v2';
 
 function parseCookies(header = '') {
     return header
@@ -114,111 +121,263 @@ function parseCookies(header = '') {
         .filter(Boolean)
         .reduce((cookies, entry) => {
             const separatorIndex = entry.indexOf('=');
-            if (separatorIndex === -1) return cookies;
+
+            if (separatorIndex === -1) {
+                return cookies;
+            }
 
             const key = entry.slice(0, separatorIndex);
             const value = entry.slice(separatorIndex + 1);
-            cookies[key] = decodeURIComponent(value);
+
+            try {
+                cookies[key] = decodeURIComponent(value);
+            } catch {
+                cookies[key] = value;
+            }
+
             return cookies;
         }, {});
 }
 
-function parseSeenQuotes(raw, totalQuotes) {
-    if (!raw) return new Set();
+function parseCookieArray(raw) {
+    if (!raw) {
+        return [];
+    }
 
-    const seen = new Set();
-    raw
-        .split('.')
-        .map(value => Number.parseInt(value, 10))
-        .forEach(index => {
-            if (Number.isInteger(index) && index >= 0 && index < totalQuotes) {
-                seen.add(index);
-            }
-        });
+    try {
+        const parsed = JSON.parse(raw);
 
-    return seen;
+        return Array.isArray(parsed)
+            ? parsed.filter(Number.isInteger)
+            : [];
+    } catch {
+        return [];
+    }
 }
 
-function getSeedValue(seedParam) {
-    const rawSeed = Array.isArray(seedParam) ? seedParam[0] : seedParam;
-    const parsed = Number.parseInt(rawSeed, 10);
-    return Number.isInteger(parsed) ? parsed : Date.now();
+function serializeCookieArray(values) {
+    return encodeURIComponent(JSON.stringify(values));
 }
 
-function serializeSeenQuotes(seenQuotes) {
-    return [...seenQuotes].join('.');
+function shuffle(array) {
+    const result = [...array];
+
+    for (let i = result.length - 1; i > 0; i -= 1) {
+        const randomIndex = Math.floor(Math.random() * (i + 1));
+
+        [result[i], result[randomIndex]] = [
+            result[randomIndex],
+            result[i],
+        ];
+    }
+
+    return result;
 }
 
-export default function handler(req, res) {
-    // Keep a per-browser cycle: show every quote once before repeating.
-    const cookies = parseCookies(req.headers.cookie || '');
-    const seenQuotes = parseSeenQuotes(cookies[SEEN_QUOTES_COOKIE], quotes.length);
+function getQuoteOrder(rawOrder) {
+    const validIndices = new Set(
+        quotes.map((_, index) => index)
+    );
 
-    let availableIndices = [];
-    for (let i = 0; i < quotes.length; i += 1) {
-        if (!seenQuotes.has(i)) {
-            availableIndices.push(i);
+    const existingOrder = parseCookieArray(rawOrder)
+        .filter(index => validIndices.has(index));
+
+    const existingSet = new Set(existingOrder);
+
+    const missingIndices = quotes
+        .map((_, index) => index)
+        .filter(index => !existingSet.has(index));
+
+    // If this is an existing rotation, append newly added quotes
+    // instead of losing them.
+    if (missingIndices.length > 0) {
+        return [...existingOrder, ...shuffle(missingIndices)];
+    }
+
+    return existingOrder;
+}
+
+function getNextQuote(order, seen) {
+    // Find the first quote in the shuffled order that has not
+    // appeared during the current cycle.
+    for (const index of order) {
+        if (!seen.has(index)) {
+            return index;
         }
     }
 
-    if (availableIndices.length === 0) {
-        seenQuotes.clear();
-        availableIndices = quotes.map((_, index) => index);
+    // Every quote has been shown.
+    // Start a completely new randomized cycle.
+    const newOrder = shuffle(
+        quotes.map((_, index) => index)
+    );
+
+    return {
+        quoteIndex: newOrder[0],
+        order: newOrder,
+        reset: true,
+    };
+}
+
+export default function handler(req, res) {
+    const cookies = parseCookies(req.headers.cookie || '');
+
+    let order = getQuoteOrder(cookies[SHUFFLE_COOKIE]);
+    let seen = new Set(
+        parseCookieArray(cookies[SEEN_QUOTES_COOKIE])
+            .filter(index => index >= 0 && index < quotes.length)
+    );
+
+    let result = getNextQuote(order, seen);
+
+    let quoteIndex;
+    let resetCycle = false;
+
+    if (typeof result === 'number') {
+        quoteIndex = result;
+    } else {
+        quoteIndex = result.quoteIndex;
+        order = result.order;
+        seen = new Set();
+        resetCycle = true;
     }
 
-    const seed = getSeedValue(req.query.seed);
-    const availableIndex = Math.abs(seed) % availableIndices.length;
-    const quoteIndex = availableIndices[availableIndex];
     const quote = quotes[quoteIndex];
 
-    seenQuotes.add(quoteIndex);
-    res.setHeader(
-        'Set-Cookie',
-        `${SEEN_QUOTES_COOKIE}=${encodeURIComponent(serializeSeenQuotes(seenQuotes))}; Path=/; Max-Age=2592000; SameSite=Lax`
-    );
+    seen.add(quoteIndex);
+
+    // Remove stale/invalid entries and keep only the current cycle.
+    const serializedSeen = serializeCookieArray([...seen]);
+
+    const serializedOrder = serializeCookieArray(order);
+
+    const cookieOptions =
+        'Path=/; Max-Age=2592000; SameSite=Lax';
+
+    res.setHeader('Set-Cookie', [
+        `${SEEN_QUOTES_COOKIE}=${serializedSeen}; ${cookieOptions}`,
+        `${SHUFFLE_COOKIE}=${serializedOrder}; ${cookieOptions}`,
+    ]);
 
     const width = 800;
     const padding = 48;
     const maxLineWidth = 56;
-    
-    const textLines = wrapText(quote.text, maxLineWidth);
+
+    const textLines = wrapText(
+        quote.text,
+        maxLineWidth
+    );
+
     const lineHeight = 34;
     const authorOffset = 26;
-    
-    const height = padding * 2 + (textLines.length * lineHeight) + authorOffset + 20;
+
+    const height =
+        padding * 2 +
+        (textLines.length * lineHeight) +
+        authorOffset +
+        20;
 
     const svg = `
-    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Quote card">
+    <svg
+        width="${width}"
+        height="${height}"
+        viewBox="0 0 ${width} ${height}"
+        xmlns="http://www.w3.org/2000/svg"
+        role="img"
+        aria-label="Quote card"
+    >
         <defs>
-            <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient
+                id="bg-gradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+            >
                 <stop offset="0%" stop-color="#26313a" />
                 <stop offset="100%" stop-color="#30414a" />
             </linearGradient>
 
-            <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="0" dy="8" stdDeviation="18" flood-color="#0b0f12" flood-opacity="0.45" />
+            <filter
+                id="soft-shadow"
+                x="-20%"
+                y="-20%"
+                width="140%"
+                height="140%"
+            >
+                <feDropShadow
+                    dx="0"
+                    dy="8"
+                    stdDeviation="18"
+                    flood-color="#0b0f12"
+                    flood-opacity="0.45"
+                />
             </filter>
         </defs>
 
-        <rect width="${width}" height="${height}" rx="14" fill="url(#bg-gradient)" filter="url(#soft-shadow)" stroke-opacity="0.04" stroke="#ffffff" />
+        <rect
+            width="${width}"
+            height="${height}"
+            rx="14"
+            fill="url(#bg-gradient)"
+            filter="url(#soft-shadow)"
+            stroke-opacity="0.04"
+            stroke="#ffffff"
+        />
 
-        <!-- Large faint opening quote mark for a modern minimalist touch -->
-        <text x="${padding}" y="${padding + 18}" font-family: 'serif' font-size="120" fill="#ffffff" fill-opacity="0.06" font-weight="700">“</text>
+        <text
+            x="${padding}"
+            y="${padding + 18}"
+            font-family="serif"
+            font-size="120"
+            fill="#ffffff"
+            fill-opacity="0.06"
+            font-weight="700"
+        >“</text>
 
         <g transform="translate(${padding + 28}, ${padding + 56})">
             ${textLines.map((line, i) => `
-                <text x="0" y="${i * lineHeight}" font-family="Inter, Segoe UI, Roboto, -apple-system, system-ui, Arial, sans-serif" font-size="20" fill="#ffffff" fill-opacity="0.96" font-weight="500">
-                    ${escapeXml(line)}
-                </text>
+                <text
+                    x="0"
+                    y="${i * lineHeight}"
+                    font-family="Inter, Segoe UI, Roboto, -apple-system, system-ui, Arial, sans-serif"
+                    font-size="20"
+                    fill="#ffffff"
+                    fill-opacity="0.96"
+                    font-weight="500"
+                >${escapeXml(line)}</text>
             `).join('')}
 
-            <text x="0" y="${textLines.length * lineHeight + authorOffset}" font-family="Inter, Segoe UI, Roboto, -apple-system, system-ui, Arial, sans-serif" font-size="14" fill="#ffffff" fill-opacity="0.7" font-style="italic">
-                — ${escapeXml(quote.author)}
-            </text>
+            <text
+                x="0"
+                y="${textLines.length * lineHeight + authorOffset}"
+                font-family="Inter, Segoe UI, Roboto, -apple-system, system-ui, Arial, sans-serif"
+                font-size="14"
+                fill="#ffffff"
+                fill-opacity="0.7"
+                font-style="italic"
+            >— ${escapeXml(quote.author)}</text>
         </g>
     </svg>`;
 
     res.setHeader('Content-Type', 'image/svg+xml');
-    res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+
+    // This is a per-browser, cookie-based endpoint.
+    // Do not let browsers/proxies reuse an old SVG.
+    res.setHeader(
+        'Cache-Control',
+        'private, no-store, no-cache, must-revalidate'
+    );
+
+    res.setHeader(
+        'Pragma',
+        'no-cache'
+    );
+
+    res.setHeader(
+        'Expires',
+        '0'
+    );
+
     res.status(200).send(svg);
 }
