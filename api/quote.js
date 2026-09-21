@@ -2,10 +2,10 @@
 
 
 const quotes = [
- 
- { text: "No matter how far, or how long, I can hear my lonely heartbeat echoing. That's why whenever I feel warmth, I come to cherish it dearly.", author: "AiNA THE END「Luminous」" },
- { text: "If you lay down your heavy burdens and make a pillow out of them, then take a deep breath, and you become the blue sky.", author: "Jin Hashimoto「Aozora ni Naru」" },
- { text: "Live your life by no one's way but your own.", author: "Akira Fuse「Shonen Yo」" },
+ 	{ text: "It's not a mistake what you chose. So don't give up, and don't regret.", author: "Tomohiko Kikuta「Beat on Dream on」" },
+	{ text: "No matter how far, or how long, I can hear my lonely heartbeat echoing. That's why whenever I feel warmth, I come to cherish it dearly.", author: "AiNA THE END「Luminous」" },
+	{ text: "If you lay down your heavy burdens and make a pillow out of them, then take a deep breath, and you become the blue sky.", author: "Jin Hashimoto「Aozora ni Naru」" },
+ 	{ text: "Live your life by no one's way but your own.", author: "Akira Fuse「Shonen Yo」" },
 	{ text: "Like the light overflowing from the distant horizons beyond. Your future has only just begun.", author: "Akira Fuse「Hajimari no Kimi e」" },
     { text: "Now in the hearts of everyone, call and wake up, the way you go. Search for the truth, to believe and doubt again.", author: "ISSA「Justiφ's」" },
     { text: "When you're lost, you're sure to be guided by the strength of your feelings. The future you wish for is already in your hands.", author: "AAA「Climax Jump」" },
