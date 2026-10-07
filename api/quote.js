@@ -163,7 +163,7 @@ function pickQuote(seen) {
         .map((_, index) => index)
         .filter(index => !seen.has(index));
  
-    // Everything has been shown: start a new cycle.
+    
     if (unseen.length === 0) {
         seen.clear();
         unseen = quotes.map((_, index) => index);
@@ -202,13 +202,15 @@ export default function handler(req, res) {
     );
  
     const lineHeight = 34;
-    const authorOffset = 26;
+    const textStartY = 92;    
+    const authorGap = 40;     
+    const bottomPadding = 36;
  
     const height =
-        padding * 2 +
-        (textLines.length * lineHeight) +
-        authorOffset +
-        20;
+        textStartY +
+        (textLines.length - 1) * lineHeight +
+        authorGap +
+        bottomPadding;
  
     const svg = `
     <svg
@@ -260,15 +262,15 @@ export default function handler(req, res) {
  
         <text
             x="${padding}"
-            y="${padding + 18}"
-            font-family="serif"
-            font-size="120"
+            y="84"
+            font-family="Georgia, serif"
+            font-size="100"
             fill="#ffffff"
-            fill-opacity="0.06"
+            fill-opacity="0.08"
             font-weight="700"
         >“</text>
  
-        <g transform="translate(${padding + 28}, ${padding + 56})">
+        <g transform="translate(${padding + 28}, ${textStartY})">
             ${textLines.map((line, i) => `
                 <text
                     x="0"
@@ -283,7 +285,7 @@ export default function handler(req, res) {
  
             <text
                 x="0"
-                y="${textLines.length * lineHeight + authorOffset}"
+                y="${(textLines.length - 1) * lineHeight + authorGap}"
                 font-family="Inter, Segoe UI, Roboto, -apple-system, system-ui, Arial, sans-serif"
                 font-size="14"
                 fill="#ffffff"
@@ -294,6 +296,7 @@ export default function handler(req, res) {
     </svg>`;
  
     res.setHeader('Content-Type', 'image/svg+xml');
+ 
     res.setHeader(
         'Cache-Control',
         'private, no-store, no-cache, must-revalidate'
