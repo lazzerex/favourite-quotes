@@ -81,10 +81,10 @@ function wrapText(text, maxWidth) {
     const words = text.split(' ');
     const lines = [];
     let currentLine = '';
-
+ 
     words.forEach(word => {
         const testLine = currentLine + (currentLine ? ' ' : '') + word;
-
+ 
         if (testLine.length <= maxWidth) {
             currentLine = testLine;
         } else {
@@ -94,14 +94,14 @@ function wrapText(text, maxWidth) {
             currentLine = word;
         }
     });
-
+ 
     if (currentLine) {
         lines.push(currentLine);
     }
-
+ 
     return lines;
 }
-
+ 
 function escapeXml(text) {
     return text
         .replace(/&/g, '&amp;')
@@ -110,10 +110,9 @@ function escapeXml(text) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&apos;');
 }
-
-const SEEN_QUOTES_COOKIE = 'seen_quotes_v2';
-const SHUFFLE_COOKIE = 'quote_order_v2';
-
+ 
+const SEEN_QUOTES_COOKIE = 'seen_quotes_v3';
+ 
 function parseCookies(header = '') {
     return header
         .split(';')
@@ -121,32 +120,32 @@ function parseCookies(header = '') {
         .filter(Boolean)
         .reduce((cookies, entry) => {
             const separatorIndex = entry.indexOf('=');
-
+ 
             if (separatorIndex === -1) {
                 return cookies;
             }
-
+ 
             const key = entry.slice(0, separatorIndex);
             const value = entry.slice(separatorIndex + 1);
-
+ 
             try {
                 cookies[key] = decodeURIComponent(value);
             } catch {
                 cookies[key] = value;
             }
-
+ 
             return cookies;
         }, {});
 }
-
+ 
 function parseCookieArray(raw) {
     if (!raw) {
         return [];
     }
-
+ 
     try {
         const parsed = JSON.parse(raw);
-
+ 
         return Array.isArray(parsed)
             ? parsed.filter(Number.isInteger)
             : [];
@@ -154,129 +153,63 @@ function parseCookieArray(raw) {
         return [];
     }
 }
-
+ 
 function serializeCookieArray(values) {
     return encodeURIComponent(JSON.stringify(values));
 }
-
-function shuffle(array) {
-    const result = [...array];
-
-    for (let i = result.length - 1; i > 0; i -= 1) {
-        const randomIndex = Math.floor(Math.random() * (i + 1));
-
-        [result[i], result[randomIndex]] = [
-            result[randomIndex],
-            result[i],
-        ];
-    }
-
-    return result;
-}
-
-function getQuoteOrder(rawOrder) {
-    const validIndices = new Set(
-        quotes.map((_, index) => index)
-    );
-
-    const existingOrder = parseCookieArray(rawOrder)
-        .filter(index => validIndices.has(index));
-
-    const existingSet = new Set(existingOrder);
-
-    const missingIndices = quotes
+ 
+function pickQuote(seen) {
+    let unseen = quotes
         .map((_, index) => index)
-        .filter(index => !existingSet.has(index));
-
-    // If this is an existing rotation, append newly added quotes
-    // instead of losing them.
-    if (missingIndices.length > 0) {
-        return [...existingOrder, ...shuffle(missingIndices)];
+        .filter(index => !seen.has(index));
+ 
+    // Everything has been shown: start a new cycle.
+    if (unseen.length === 0) {
+        seen.clear();
+        unseen = quotes.map((_, index) => index);
     }
-
-    return existingOrder;
+ 
+    return unseen[Math.floor(Math.random() * unseen.length)];
 }
-
-function getNextQuote(order, seen) {
-    // Find the first quote in the shuffled order that has not
-    // appeared during the current cycle.
-    for (const index of order) {
-        if (!seen.has(index)) {
-            return index;
-        }
-    }
-
-    // Every quote has been shown.
-    // Start a completely new randomized cycle.
-    const newOrder = shuffle(
-        quotes.map((_, index) => index)
-    );
-
-    return {
-        quoteIndex: newOrder[0],
-        order: newOrder,
-        reset: true,
-    };
-}
-
+ 
 export default function handler(req, res) {
     const cookies = parseCookies(req.headers.cookie || '');
-
-    let order = getQuoteOrder(cookies[SHUFFLE_COOKIE]);
-    let seen = new Set(
+ 
+    const seen = new Set(
         parseCookieArray(cookies[SEEN_QUOTES_COOKIE])
             .filter(index => index >= 0 && index < quotes.length)
     );
-
-    let result = getNextQuote(order, seen);
-
-    let quoteIndex;
-    let resetCycle = false;
-
-    if (typeof result === 'number') {
-        quoteIndex = result;
-    } else {
-        quoteIndex = result.quoteIndex;
-        order = result.order;
-        seen = new Set();
-        resetCycle = true;
-    }
-
+ 
+    const quoteIndex = pickQuote(seen);
     const quote = quotes[quoteIndex];
-
+ 
     seen.add(quoteIndex);
-
-    // Remove stale/invalid entries and keep only the current cycle.
-    const serializedSeen = serializeCookieArray([...seen]);
-
-    const serializedOrder = serializeCookieArray(order);
-
-    const cookieOptions =
-        'Path=/; Max-Age=2592000; SameSite=Lax';
-
-    res.setHeader('Set-Cookie', [
-        `${SEEN_QUOTES_COOKIE}=${serializedSeen}; ${cookieOptions}`,
-        `${SHUFFLE_COOKIE}=${serializedOrder}; ${cookieOptions}`,
-    ]);
-
+ 
+    const cookieOptions = 'Path=/; Max-Age=2592000; SameSite=Lax';
+ 
+    res.setHeader(
+        'Set-Cookie',
+        `${SEEN_QUOTES_COOKIE}=${serializeCookieArray([...seen])}; ${cookieOptions}`
+    );
+ 
     const width = 800;
     const padding = 48;
     const maxLineWidth = 56;
-
+ 
     const textLines = wrapText(
         quote.text,
         maxLineWidth
     );
-
+ 
     const lineHeight = 34;
     const authorOffset = 26;
-
+ 
     const height =
         padding * 2 +
         (textLines.length * lineHeight) +
         authorOffset +
         20;
-
+ 
     const svg = `
     <svg
         width="${width}"
@@ -297,7 +230,7 @@ export default function handler(req, res) {
                 <stop offset="0%" stop-color="#26313a" />
                 <stop offset="100%" stop-color="#30414a" />
             </linearGradient>
-
+ 
             <filter
                 id="soft-shadow"
                 x="-20%"
@@ -314,7 +247,7 @@ export default function handler(req, res) {
                 />
             </filter>
         </defs>
-
+ 
         <rect
             width="${width}"
             height="${height}"
@@ -324,7 +257,7 @@ export default function handler(req, res) {
             stroke-opacity="0.04"
             stroke="#ffffff"
         />
-
+ 
         <text
             x="${padding}"
             y="${padding + 18}"
@@ -334,7 +267,7 @@ export default function handler(req, res) {
             fill-opacity="0.06"
             font-weight="700"
         >“</text>
-
+ 
         <g transform="translate(${padding + 28}, ${padding + 56})">
             ${textLines.map((line, i) => `
                 <text
@@ -347,7 +280,7 @@ export default function handler(req, res) {
                     font-weight="500"
                 >${escapeXml(line)}</text>
             `).join('')}
-
+ 
             <text
                 x="0"
                 y="${textLines.length * lineHeight + authorOffset}"
@@ -359,25 +292,14 @@ export default function handler(req, res) {
             >— ${escapeXml(quote.author)}</text>
         </g>
     </svg>`;
-
+ 
     res.setHeader('Content-Type', 'image/svg+xml');
-
-    // This is a per-browser, cookie-based endpoint.
-    // Do not let browsers/proxies reuse an old SVG.
     res.setHeader(
         'Cache-Control',
         'private, no-store, no-cache, must-revalidate'
     );
-
-    res.setHeader(
-        'Pragma',
-        'no-cache'
-    );
-
-    res.setHeader(
-        'Expires',
-        '0'
-    );
-
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+ 
     res.status(200).send(svg);
 }
