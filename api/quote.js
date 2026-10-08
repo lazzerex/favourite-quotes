@@ -2,6 +2,7 @@
 
 
 const quotes = [
+	{ text: "These sunny blue skies, how long will they last?", author: "Sakurazaka46「Ai MUST BE」" },
  	{ text: "It's not a mistake what you chose. So don't give up, and don't regret.", author: "Tomohiko Kikuta「Beat on Dream on」" },
 	{ text: "No matter how far, or how long, I can hear my lonely heartbeat echoing. That's why whenever I feel warmth, I come to cherish it dearly.", author: "AiNA THE END「Luminous」" },
 	{ text: "If you lay down your heavy burdens and make a pillow out of them, then take a deep breath, and you become the blue sky.", author: "Jin Hashimoto「Aozora ni Naru」" },
